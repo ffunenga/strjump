@@ -4,76 +4,54 @@
 from . import elements
 
 
-def loopattempts(min_lens):
-    array = [v for k, v in min_lens]
-    n = len(array)
-    while True:
-        yield [(k, v) for (k, _), v in zip(min_lens, array)]
-        for idx in range(n):
-            if idx != (n - 1):
-                if array[idx] < array[idx + 1]:
-                    array[idx] += 1
-                    break
-            else:
-                array[idx] += 1
-
-
-def calc_equation(static_len, preceding_refs, ref_lens):
-    preceding_refs = [r.identifier for r in preceding_refs]
-    return static_len + sum(v for r, v in ref_lens if r.identifier in preceding_refs)
-
-
-def validate(attempt, result):
-    reference, index = result
-    length = len(str(index))
-    return any((ref == reference and length == val) for ref, val in attempt)
-
-
 def process(lst):
-    identifiers = [s.identifier for s in lst if type(s) == elements.Identifier]
-    references = [s.identifier for s in lst if type(s) == elements.Reference]
-    assert all(r in identifiers for r in references), "reference unknown"
+    types = [elements.Identifier, elements.Reference, str]
+    for i, s in enumerate(lst):
+        assert type(s) in types, "type of lst[%d] is unknown (%s)" % (i, type(s))
+    identifiers = [i.identifier for i in lst if type(i) == elements.Identifier]
+    references = [r for r in lst if type(r) == elements.Reference]
+    assert all(r.identifier in identifiers for r in references), "reference unknown"
+
+    identifiers = []
+    __pre_refs = [0] * len(references)
+    __next_idx = 0
+    __pre_lenstatic = 0
     for idx, i in enumerate(lst):
-        if type(i) == elements.Identifier and i.identifier not in references:
-            lst[idx] = i.content
+        if type(i) == elements.Identifier:
+            identifier = lst[idx]
+            identifier.set_preceding(__pre_lenstatic, __pre_refs[:])
+            identifiers.append(identifier)
+            __ini_len = len(str(__pre_lenstatic + 1))
+            for r in references:
+                if r.identifier == identifier.identifier:
+                    r.length = __ini_len
+            __pre_lenstatic += len(i)
+        elif type(i) == elements.Reference:
+            __pre_refs[__next_idx] = 1
+            __next_idx += 1
+        elif type(i) == str:
+            __pre_lenstatic += len(i)
 
-    min_lens = []
-    equations = []
-    for idx in [i for i, s in enumerate(lst) if type(s) == elements.Identifier]:
-        reference = lst[idx].reference()
-        preceding = lst[:idx]
-        static_len = sum(len(s) for s in preceding)
-        min_len = len(str(static_len))
-        preceding_refs = [s for s in preceding if type(s) == elements.Reference]
-        if 0:
-            print("element:", lst[idx])
-            print("preceding:", preceding)
-            print("static_len:", static_len)
-            print("min_len:", min_len)
-            print("preceding_refs:", preceding_refs)
-            print("---")
-        min_lens.append((reference, min_len))
-        equations.append((reference, static_len, preceding_refs))
+    __idx = 0
+    __previous = -1
+    __current = 0
+    __onemore = False
+    while True:
+        identifier = identifiers[__idx]
+        x = identifier.calc_x(r.length for r in references)
+        __current += x
+        x = str(x)
+        [r.set(x) for r in references if r.identifier == identifier.identifier]
+        if __onemore:
+            break
+        if __previous == __current:
+            __onemore = True
+        __idx = (__idx + 1) % len(identifiers)
+        if __idx == 0:
+            __previous = __current
+            __current = 0
 
-    print("min_lens:", min_lens)
-    for attempt in loopattempts(min_lens):
-        flag = True
-        rsts = []
-        for reference, static_len, preceding_refs in equations:
-            rst = calc_equation(static_len, preceding_refs, attempt)
-            flag = validate(attempt, (reference, rst))
-            if not flag:
-                break
-            rsts.append(rst)
-        if flag:
-            router = {r.identifier: str(i) for (r, l), i in zip(attempt, rsts)}
-            rst = ""
-            for l in lst:
-                if type(l) == elements.Reference:
-                    rst += router[l.identifier]
-                elif type(l) == elements.Identifier:
-                    rst += l.flat()
-                else:
-                    rst += l
-            return rst
-        assert 1, "solution not found"
+    return ''.join(str(i) for i in lst)
+
+
+

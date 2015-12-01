@@ -2,4 +2,4 @@
 
 
 def repr_string(lst):
-    return ''.join(str(s) for s in lst)
+    return ''.join(s if type(s) == str else s.representation() for s in lst)
