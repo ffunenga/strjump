@@ -10,7 +10,8 @@ def process(lst):
         assert type(s) in types, "type of lst[%d] is unknown (%s)" % (i, type(s))
     identifiers = [i.identifier for i in lst if type(i) == elements.Identifier]
     references = [r for r in lst if type(r) == elements.Reference]
-    assert all(r.identifier in identifiers for r in references), "reference unknown"
+    for r in references:
+        assert r.identifier in identifiers, "reference unknown '%s'" % r.identifier
 
     identifiers = []
     __pre_refs = [0] * len(references)
