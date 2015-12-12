@@ -1,7 +1,45 @@
 #!/usr/bin/env python3
 
 
+import itertools
+
 from . import elements
+
+
+def xmax_A(A, R):
+    p = [((10 ** ri) - 1) for ri in R]
+    return [(pi - ai) for pi, ai in zip(p, A)]
+
+
+def A_xmin(A, R):
+    p = [(10 ** (ri - 1)) for ri in R]
+    return [(ai - pi) for ai, pi in zip(A, p)]
+
+
+def coefs(S, Cr, R):
+    A = [sum((cij * ri) for cij, ri in zip(ci, R)) for ci in Cr]
+    A = [(si + p0i) for si, p0i in zip(S, A)]
+    return [(u * l) for u, l in zip(xmax_A(A, R), A_xmin(A, R))]
+
+
+def validate(c_array):
+    return all((ci >= 0) for ci in c_array)
+
+
+def iterR(n):
+    array = [1] * n
+    idx = n - 1
+    while True:
+        yield array[::-1]
+        if idx == n - 1 and array[idx] == array[idx - 1]:
+            while idx > 0 and array[idx] == array[idx - 1]:
+                idx -= 1
+            array[idx] += 1
+            for j in range(idx + 1, n):
+                array[j] = 1
+        else:
+            idx = min(idx + 1, n - 1)
+            array[idx] += 1
 
 
 def process(lst):
@@ -13,46 +51,38 @@ def process(lst):
     for r in references:
         assert r.identifier in identifiers, "reference unknown '%s'" % r.identifier
 
-    identifiers = []
-    __pre_refs = [0] * len(references)
-    __next_idx = 0
-    __pre_lenstatic = 0
-    for idx, i in enumerate(lst):
-        if type(i) == elements.Identifier:
-            identifier = lst[idx]
-            identifier.set_preceding(__pre_lenstatic, __pre_refs[:])
-            identifiers.append(identifier)
-            __ini_len = len(str(__pre_lenstatic + 1))
-            for r in references:
-                if r.identifier == identifier.identifier:
-                    r.length = __ini_len
-            __pre_lenstatic += len(i)
-        elif type(i) == elements.Reference:
-            __pre_refs[__next_idx] = 1
-            __next_idx += 1
-        elif type(i) == str:
-            __pre_lenstatic += len(i)
+    S = []
+    for i, item in enumerate(lst):
+        if type(item) == elements.Identifier:
+            pre_static = sum(len(pre) for pre in lst[:i]
+                             if type(pre) != elements.Reference)
+            S.append(pre_static)
 
-    __idx = 0
-    __previous = -1
-    __current = 0
-    __onemore = False
-    while True:
-        identifier = identifiers[__idx]
-        x = identifier.calc_x(r.length for r in references)
-        __current += x
-        x = str(x)
-        [r.set(x) for r in references if r.identifier == identifier.identifier]
-        if __onemore:
+    N = len(S)
+
+    idxs_identifiers = [item.identifier for item in lst
+                        if type(item) == elements.Identifier]
+
+    Cr = []
+    for i, item in enumerate(lst):
+        if type(item) == elements.Identifier:
+            pre_refs = [idxs_identifiers.index(pre.identifier)
+                        for pre in lst[:i] if type(pre) == elements.Reference]
+            Cr.append([(1 if i in pre_refs else 0) for i in range(N)])
+
+    for R in iterR(N):
+        rst = coefs(S, Cr, R)
+        if validate(rst):
             break
-        if __previous == __current:
-            __onemore = True
-        __idx = (__idx + 1) % len(identifiers)
-        if __idx == 0:
-            __previous = __current
-            __current = 0
 
-    return ''.join(str(i) for i in lst)
+    CrR = [sum((cij * ai) for cij, ai in zip(ci, R)) for ci in Cr]
 
+    X = [(si + ci) for si, ci in zip(S, CrR)]
 
+    router = {k: str(v) for k, v in zip(idxs_identifiers, X)}
 
+    rst = ''.join((item if type(item) == str else
+                   (item.content if type(item) == elements.Identifier
+                                 else router[item.identifier]))
+                  for item in lst)
+    return rst
