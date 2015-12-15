@@ -1,5 +1,3 @@
-######STRJUMP
-
 Checkout [http://ffunenga.github.io/strjump](http://ffunenga.github.io/strjump) for more information.
 
 **Install** strjump from PyPI with:
