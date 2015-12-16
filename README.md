@@ -9,11 +9,16 @@ $ pip install strjump
 
 ```
 $ python -m unittest discover
+$ python2 -m unittest discover
+$ python3 -m unittest discover
+$ python setup.py test
+(...)
+$ tox    # requires: sudo pip install tox
+$ detox  # requires: sudo pip install detox
 ```
 
 **Deploy** to PyPI with:
 
 ```
-$ python setup.py sdist bdist_wheel
-$ twine upload dist/*
+$ python setup.py register
 ```
