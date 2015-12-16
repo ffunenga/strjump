@@ -21,4 +21,5 @@ $ detox  # requires: sudo pip install detox
 
 ```
 $ python setup.py register
+$ python setup.py upload
 ```
