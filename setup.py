@@ -3,8 +3,7 @@
 
 
 """\
-Checkout [http://ffunenga.github.io/strjump](http://ffunenga.github.io/strjump)
-for more information.
+Checkout http://ffunenga.github.io/strjump for more information.
 """
 
 
@@ -21,7 +20,7 @@ with open('strjump/version.py') as f:
 setup(
     name='strjump',
     version=__version__,
-    description="Generate a string comprising at least one digit representation of an index to herself.",
+    description="Generate a string comprising at least one digit representation of an index in herself.",
     long_description=__doc__,
     author="Filipe Funenga",
     author_email="fmafunenga@gmail.com",
