@@ -13,9 +13,9 @@ from setuptools import setup
 
 
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.md')) as f:
-    long_description = f.read()
-execfile('strjump/version.py')
+with open('strjump/version.py') as f:
+    code = compile(f.read(), 'strjump/version.py', 'exec')
+    exec(code)
 
 
 setup(
